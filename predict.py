@@ -58,7 +58,10 @@ class Predictor(BasePredictor):
     def setup(self):
         logger.info("Starting setup...")
         logger.info("Loading models...")
-        logger.info(f'{os.listdir(".")}')
+
+        # Create output directory if it doesn't exist
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        
         self.wan_14b_high = load_models_with_stack_loras('Wan2.2-T2V-A14B-HighNoise.gguf')
         self.wan_14b_low  = load_models_with_stack_loras('Wan2.2-T2V-A14B-LowNoise.gguf')
         self.clip = load_clip('umt5_xxl_fp8_e4m3fn_scaled.safetensors')
@@ -141,7 +144,7 @@ class Predictor(BasePredictor):
                 cfg=1.0,
                 sampler_name='res_multistep',
                 scheduler='beta',
-                positive=positive,
+                positive=get_value_at_index(positive, 0),
                 negative=self.negative,
                 latent_image=get_value_at_index(latents, 0),
                 start_at_step=mid_step, 
@@ -171,9 +174,17 @@ class Predictor(BasePredictor):
             )
             result = get_value_at_index(vhs, 0)[1]
 
-            new_path = f'{uuid.uuid4()}.mp4'
-            shutil.move(result[1], os.path.join(OUTPUT_DIR, new_path))
-            os.remove(result[0])
-            os.remove(result[1])
-            print(new_path)
-            return [Path(new_path)]
+            # Create unique filename and full output path
+            filename = f'{uuid.uuid4()}.mp4'
+            output_path = os.path.join(OUTPUT_DIR, filename)
+            
+            # Move the generated video to output directory
+            shutil.move(result[1], output_path)
+            
+            # Clean up temporary files (but not the output video)
+            if os.path.exists(result[0]):
+                os.remove(result[0])
+            
+            print(f"Video saved to: {output_path}")
+            print(f"Video details: {width}x{height}, {length} frames, {steps} steps")
+            return [Path(output_path)]
