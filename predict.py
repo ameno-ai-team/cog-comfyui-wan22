@@ -77,15 +77,15 @@ class Predictor(BasePredictor):
             default='',
         ),
         width: int = Input(
-            description='Width (default: 480)',
+            description='Width',
             default=480
         ),
         height: int = Input(
-            description='Height (default: 864)',
+            description='Height',
             default=864
         ),
         length: int = Input(
-            description='Length/Frames(default: 81)',
+            description='Length/Frames',
             choices=[17, 33, 49, 65, 81],
             default=81
         ),
@@ -93,8 +93,12 @@ class Predictor(BasePredictor):
             description='Steps for generation',
             default=8
         ),
+        fps: int = Input(
+            description='FPS',
+            default=16
+        ),
         seeds: int = Input(
-            description='Seeds (Zero for automatically randomise)',
+            description='Seeds',
             default=0,
         ),
     ) -> List[Path]:
@@ -159,7 +163,7 @@ class Predictor(BasePredictor):
             )
 
             vhs = NODE_CLASS_MAPPINGS['VHS_VideoCombine']().combine_video(
-                frame_rate=16,
+                frame_rate=fps if fps > 0 else 16,
                 loop_count=0,
                 filename_prefix=f"wan",
                 format='video/h264-mp4',
