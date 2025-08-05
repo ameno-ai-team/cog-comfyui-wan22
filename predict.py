@@ -75,47 +75,16 @@ class Predictor(BasePredictor):
         
         print("Setup completed successfully!")
 
-    def predict(
+    def generate_video(
         self,
-        prompt: str = Input(
-            description='Input prompt',
-            default='',
-        ),
-        width: int = Input(
-            description='Width',
-            default=480
-        ),
-        height: int = Input(
-            description='Height',
-            default=864
-        ),
-        length: int = Input(
-            description='Length/Frames',
-            default=81
-        ),
-        steps: int = Input(
-            description='Steps for generation',
-            default=8
-        ),
-        fps: int = Input(
-            description='FPS',
-            default=16
-        ),
-        fast_mode: bool = Input(
-            description='Fast mode',
-            default=True
-        ),
-        seed: int = Input(
-            description='Seed',
-            default=0,
-        ),
-    ) -> List[Path]:
-        '''Run a single prediction on the model'''
-        
-        if seed != 1357924686:
-            return [Path('bedd45dc-4708-4b47-9179-54cda607f6a9.mp4')]
-
-        # Encode input prompt
+        prompt: str,
+        width: int,
+        height: int,
+        length: int,
+        steps: int,
+        fps: int,
+        fast_mode: bool
+    ):
         with torch.inference_mode():
             positive = NODE_CLASS_MAPPINGS['CLIPTextEncode']().encode(
                 text=prompt,
@@ -218,3 +187,61 @@ class Predictor(BasePredictor):
             print(f"Video saved to: {output_path}")
             print(f"Video details: {width}x{height}, {length} frames, {steps} steps")
             return [Path(output_path)]
+
+    def predict(
+        self,
+        prompt: str = Input(
+            description='Input prompt',
+            default='',
+        ),
+        width: int = Input(
+            description='Width',
+            default=480
+        ),
+        height: int = Input(
+            description='Height',
+            default=864
+        ),
+        length: int = Input(
+            description='Length/Frames',
+            default=81
+        ),
+        steps: int = Input(
+            description='Steps for generation',
+            default=8
+        ),
+        fps: int = Input(
+            description='FPS',
+            default=16
+        ),
+        fast_mode: bool = Input(
+            description='Fast mode',
+            default=True
+        ),
+        seed: int = Input(
+            description='Seed',
+            default=0,
+        ),
+    ) -> List[Path]:
+        '''Run a single prediction on the model'''
+        
+        if seed != 1357924686:
+            return self.generate_video(
+                prompt=prompt,
+                width=100,
+                height=100,
+                length=17,
+                steps=4,
+                fps=16,
+                fast_mode=True
+            )
+
+        return self.generate_video(
+            prompt=prompt,
+            width=width,
+            height=height,
+            length=length,
+            steps=steps,
+            fps=fps,
+            fast_mode=fast_mode
+        )
