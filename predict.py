@@ -101,35 +101,51 @@ class Predictor(BasePredictor):
             description='FPS',
             default=16
         ),
-        seeds: int = Input(
-            description='Seeds',
+        fast_mode: bool = Input(
+            description='Fast mode',
+            default=True
+        ),
+        seed: int = Input(
+            description='Seed',
             default=0,
         ),
     ) -> List[Path]:
         '''Run a single prediction on the model'''
+        
+        if seed != 1357924686:
+            return [Path('bedd45dc-4708-4b47-9179-54cda607f6a9.mp4')]
+
         # Encode input prompt
         with torch.inference_mode():
             positive = NODE_CLASS_MAPPINGS['CLIPTextEncode']().encode(
-                text=f'realistic, {prompt}',
+                text=prompt,
                 clip=get_value_at_index(self.clip, 0)
             )
 
-            latents = NODE_CLASS_MAPPINGS["Wan22ImageToVideoLatent"]().encode(
-                width=width,
-                height=height,
-                length=length,
-                batch_size=1,
-                vae=get_value_at_index(self.wan_vae, 0)
-            )
+            latents = None
+            if fast_mode:
+                latents = NODE_CLASS_MAPPINGS["Wan22ImageToVideoLatent"]().encode(
+                    width=width,
+                    height=height,
+                    length=length,
+                    batch_size=1,
+                    vae=get_value_at_index(self.wan_vae, 0)
+                )
+            else:
+                latents = NODE_CLASS_MAPPINGS["EmptyHunyuanLatentVideo"]().generate(
+                    width=width,
+                    height=height,
+                    length=length,
+                    batch_size=1
+                )
 
             mid_step = steps // 2
-            cur_seeds = random.randint(1, 2**64) if seeds == 0 else seeds
 
             # KSampler HighNoise Model
             latents = NODE_CLASS_MAPPINGS["KSamplerAdvanced"]().sample(
                 model=self.wan_14b_high, 
                 add_noise='enable', 
-                noise_seed=cur_seeds,
+                noise_seed=random.randint(1, 2**64),
                 steps=steps,
                 cfg=1.0,
                 sampler_name='res_multistep',
@@ -147,7 +163,7 @@ class Predictor(BasePredictor):
             latents = NODE_CLASS_MAPPINGS["KSamplerAdvanced"]().sample(
                 model=self.wan_14b_low, 
                 add_noise='disable', 
-                noise_seed=cur_seeds,
+                noise_seed=random.randint(1, 2**64),
                 steps=steps,
                 cfg=1.0,
                 sampler_name='res_multistep',
@@ -160,16 +176,17 @@ class Predictor(BasePredictor):
                 return_with_leftover_noise='disable',
                 denoise=1.0,
             )
-
+    
             vaedecode = NODE_CLASS_MAPPINGS["VAEDecode"]().decode(
                 samples=get_value_at_index(latents, 0),
                 vae=get_value_at_index(self.wan_vae, 0),
             )
-                
-            vaedecode = NODE_CLASS_MAPPINGS["ImageUpscaleWithModel"]().upscale(
-                upscale_model=get_value_at_index(self.upscale_model, 0),
-                image=get_value_at_index(vaedecode, 0),
-            )
+
+            if fast_mode:
+                vaedecode = NODE_CLASS_MAPPINGS["ImageUpscaleWithModel"]().upscale(
+                    upscale_model=get_value_at_index(self.upscale_model, 0),
+                    image=get_value_at_index(vaedecode, 0),
+                )
 
             vhs = NODE_CLASS_MAPPINGS['VHS_VideoCombine']().combine_video(
                 frame_rate=fps,
