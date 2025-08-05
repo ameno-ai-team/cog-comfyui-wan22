@@ -24,4 +24,5 @@ build:
     - curl -L https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors -o ComfyUI/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors 
     - curl -L https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors -o ComfyUI/models/loras/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors
     - curl -L https://huggingface.co/hotdogs/wan_nsfw_lora/resolve/main/Wan2.1_T2V_14B_FusionX_LoRA.safetensors -o ComfyUI/models/loras/Wan2.1_T2V_14B_FusionX_LoRA.safetensors
+    - curl -L https://huggingface.co/ai-forever/Real-ESRGAN/resolve/a86fc6182b4650b4459cb1ddcb0a0d1ec86bf3b0/RealESRGAN_x2.pth -o ComfyUI/models/upscale_models/RealESRGAN_x2.pth
 predict: "predict.py:Predictor"

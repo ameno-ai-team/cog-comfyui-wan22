@@ -54,6 +54,10 @@ def load_vae(model_name: str):
     with torch.inference_mode():
         return NODE_CLASS_MAPPINGS["VAELoader"]().load_vae(vae_name=model_name)
 
+def load_upscale_model(model_name: str):
+    with torch.inference_mode():
+        return NODE_CLASS_MAPPINGS["UpscaleModelLoader"]().load_model(model_name=model_name)
+
 class Predictor(BasePredictor):
     def setup(self):
         logger.info("Starting setup...")
@@ -66,6 +70,7 @@ class Predictor(BasePredictor):
         self.wan_14b_low  = load_models_with_stack_loras('Wan2.2-T2V-A14B-LowNoise.gguf')
         self.clip = load_clip('umt5_xxl_fp8_e4m3fn_scaled.safetensors')
         self.wan_vae = load_vae('Wan2.1_VAE.safetensors')
+        self.upscale_model = load_upscale_model('RealESRGAN_x2.pth')
         self.negative = torch.load('negative.pt', map_location='cuda', weights_only=True)
         
         print("Setup completed successfully!")
@@ -86,7 +91,6 @@ class Predictor(BasePredictor):
         ),
         length: int = Input(
             description='Length/Frames',
-            choices=[17, 33, 49, 65, 81],
             default=81
         ),
         steps: int = Input(
@@ -161,9 +165,14 @@ class Predictor(BasePredictor):
                 samples=get_value_at_index(latents, 0),
                 vae=get_value_at_index(self.wan_vae, 0),
             )
+                
+            vaedecode = NODE_CLASS_MAPPINGS["ImageUpscaleWithModel"]().upscale(
+                upscale_model=get_value_at_index(self.upscale_model, 0),
+                image=get_value_at_index(vaedecode, 0),
+            )
 
             vhs = NODE_CLASS_MAPPINGS['VHS_VideoCombine']().combine_video(
-                frame_rate=fps if fps > 0 else 16,
+                frame_rate=fps,
                 loop_count=0,
                 filename_prefix=f"wan",
                 format='video/h264-mp4',
