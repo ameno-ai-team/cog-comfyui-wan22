@@ -11,8 +11,10 @@ OUTPUT_DIR = '/tmp/outputs'
 
 class Predictor(BasePredictor):
     def setup(self):
-        self.wan_14b_high = load_models_with_stack_loras('Wan2.2-T2V-A14B-HighNoise-Q8_0.gguf')
-        self.wan_14b_low  = load_models_with_stack_loras('Wan2.2-T2V-A14B-LowNoise-Q8_0.gguf')
+        download_all_models()
+        self.wan_14b_high = load_models_with_stack_loras('Wan2.2-T2V-A14B-HighNoise.gguf')
+        self.wan_14b_low  = load_models_with_stack_loras('Wan2.2-T2V-A14B-LowNoise.gguf')
+        self.clip = load_clip('umt5_xxl_fp8_e4m3fn_scaled.safetensors')
         self.wan_vae = load_vae('Wan2.1_VAE.safetensors')
         self.negative = torch.load('negative.pt', map_location='cuda', weights_only=True)
 
@@ -23,15 +25,16 @@ class Predictor(BasePredictor):
             default='',
         ),
         width: int = Input(
-            description='Width (default: 432)',
-            default=432
+            description='Width (default: 480)',
+            default=480
         ),
         height: int = Input(
-            description='Height (default: 768)',
-            default=768
+            description='Height (default: 864)',
+            default=864
         ),
         length: int = Input(
             description='Length/Frames(default: 81)',
+            choices=[17, 33, 49, 65, 81],
             default=81
         ),
         steps: int = Input(
@@ -46,22 +49,17 @@ class Predictor(BasePredictor):
         '''Run a single prediction on the model'''
         # Encode input prompt
         with torch.inference_mode():
-            clip = NODE_CLASS_MAPPINGS['CLIPLoader']().load_clip(
-                clip_name='umt5_xxl_fp8_e4m3fn_scaled.safetensors',
-                type='wan',
-                device='default',
-            )
-            textencode = NODE_CLASS_MAPPINGS['CLIPTextEncode']().encode(
+            positive = NODE_CLASS_MAPPINGS['CLIPTextEncode']().encode(
                 text=f'realistic, {prompt}',
-                clip=get_value_at_index(clip, 0)
+                clip=get_value_at_index(self.clip, 0)
             )
-            positive = get_value_at_index(textencode, 0)
 
-            latents = NODE_CLASS_MAPPINGS["EmptyHunyuanLatentVideo"]().generate(
+            latents = NODE_CLASS_MAPPINGS["Wan22ImageToVideoLatent"]().generate(
                 width=width,
                 height=height,
                 length=length,
                 batch_size=1,
+                vae=get_value_at_index(self.wan_vae, 0)
             )
 
             mid_step = steps // 2
@@ -76,7 +74,7 @@ class Predictor(BasePredictor):
                 cfg=1.0,
                 sampler_name='res_multi',
                 scheduler='beta',
-                positive=positive,
+                positive=get_value_at_index(positive, 0),
                 negative=self.negative,
                 latent_image=get_value_at_index(latents, 0),
                 start_at_step=0, 
@@ -108,15 +106,6 @@ class Predictor(BasePredictor):
                 vae=get_value_at_index(self.wan_vae, 0),
             )
 
-            # upscale_model = NODE_CLASS_MAPPINGS["UpscaleModelLoader"]().load_model(
-            #     model_name='RealESRGAN_x2.pth'
-            # )
-                
-            # vaedecode = NODE_CLASS_MAPPINGS["ImageUpscaleWithModel"]().upscale(
-            #     upscale_model=get_value_at_index(upscale_model, 0),
-            #     image=get_value_at_index(vaedecode, 0),
-            # )
-
             vhs = NODE_CLASS_MAPPINGS['VHS_VideoCombine']().combine_video(
                 frame_rate=16,
                 loop_count=0,
@@ -138,4 +127,4 @@ class Predictor(BasePredictor):
             os.remove(result[0])
             os.remove(result[1])
             print(new_path)
-            return [new_path]
+            return [Path(new_path)]
