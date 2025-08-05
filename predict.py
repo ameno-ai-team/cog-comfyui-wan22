@@ -83,7 +83,8 @@ class Predictor(BasePredictor):
         length: int,
         steps: int,
         fps: int,
-        fast_mode: bool
+        fast_mode: bool,
+        upscale: bool
     ):
         with torch.inference_mode():
             positive = NODE_CLASS_MAPPINGS['CLIPTextEncode']().encode(
@@ -151,7 +152,7 @@ class Predictor(BasePredictor):
                 vae=get_value_at_index(self.wan_vae, 0),
             )
 
-            if fast_mode:
+            if upscale:
                 vaedecode = NODE_CLASS_MAPPINGS["ImageUpscaleWithModel"]().upscale(
                     upscale_model=get_value_at_index(self.upscale_model, 0),
                     image=get_value_at_index(vaedecode, 0),
@@ -183,6 +184,8 @@ class Predictor(BasePredictor):
             # Clean up temporary files (but not the output video)
             if os.path.exists(result[0]):
                 os.remove(result[0])
+            if os.path.exists(result[1]):
+                os.remove(result[1])
             
             print(f"Video saved to: {output_path}")
             print(f"Video details: {width}x{height}, {length} frames, {steps} steps")
@@ -218,6 +221,10 @@ class Predictor(BasePredictor):
             description='Fast mode',
             default=True
         ),
+        upscale: bool = Input(
+            description='Upscale x2',
+            default=True
+        ),
         seed: int = Input(
             description='Seed',
             default=0,
@@ -230,10 +237,11 @@ class Predictor(BasePredictor):
                 prompt=prompt,
                 width=100,
                 height=100,
-                length=17,
-                steps=4,
+                length=1,
+                steps=2,
                 fps=16,
-                fast_mode=True
+                fast_mode=True,
+                upscale=False
             )
 
         return self.generate_video(
@@ -243,5 +251,6 @@ class Predictor(BasePredictor):
             length=length,
             steps=steps,
             fps=fps,
-            fast_mode=fast_mode
+            fast_mode=fast_mode,
+            upscale=upscale
         )
