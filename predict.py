@@ -11,12 +11,15 @@ OUTPUT_DIR = '/tmp/outputs'
 
 class Predictor(BasePredictor):
     def setup(self):
-        download_all_models()
+        print("Starting setup...")
+        print("Loading models...")
         self.wan_14b_high = load_models_with_stack_loras('Wan2.2-T2V-A14B-HighNoise.gguf')
         self.wan_14b_low  = load_models_with_stack_loras('Wan2.2-T2V-A14B-LowNoise.gguf')
         self.clip = load_clip('umt5_xxl_fp8_e4m3fn_scaled.safetensors')
         self.wan_vae = load_vae('Wan2.1_VAE.safetensors')
         self.negative = torch.load('negative.pt', map_location='cuda', weights_only=True)
+        
+        print("Setup completed successfully!")
 
     def predict(
         self,
