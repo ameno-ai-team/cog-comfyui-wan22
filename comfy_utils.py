@@ -34,7 +34,7 @@ def add_comfyui_directory_to_sys_path() -> None:
 
 def add_extra_model_paths() -> None:
     try:
-        from main import load_extra_path_config # type: ignore
+        from main import load_extra_path_config
     except ImportError:
         print("Could not import load_extra_path_config from main.py. Looking in utils.extra_config instead.")
         try:
@@ -50,10 +50,13 @@ def add_extra_model_paths() -> None:
     else:
         print("Could not find the extra_model_paths config file.")
 
+async def init_extra_nodes_async():
+    from nodes import init_extra_nodes
+    await init_extra_nodes()
+
 def import_custom_nodes() -> None:
     import asyncio
     import execution
-    from nodes import init_extra_nodes
     import server
 
     loop = asyncio.new_event_loop()
@@ -62,50 +65,10 @@ def import_custom_nodes() -> None:
     server_instance = server.PromptServer(loop)
     execution.PromptQueue(server_instance)
 
-    init_extra_nodes()
+    # Run the async init_extra_nodes function
+    loop.run_until_complete(init_extra_nodes_async())
 
 add_comfyui_directory_to_sys_path()
 add_extra_model_paths()
 from nodes import NODE_CLASS_MAPPINGS
 import_custom_nodes()
-
-import torch
-
-LORAS = [
-    { 'lora': 'Wan2.1_T2V_14B_FusionX_LoRA.safetensors', 'strength_model': 0.5 },
-    { 'lora': 'lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors', 'strength_model': 1.0 }
-]
-
-def load_models_with_stack_loras(model_name: str):
-    with torch.inference_mode():
-        model = NODE_CLASS_MAPPINGS["UnetLoaderGGUF"]().load_unet(
-            unet_name=model_name,
-        )
-        model = get_value_at_index(model, 0)
-
-        for l in LORAS:
-            lora = NODE_CLASS_MAPPINGS['LoraLoaderModelOnly']().load_lora_model_only(
-                model=model,
-                lora_name=l['lora'],
-                strength_model=l.get('strength_model', 1.0)
-            )
-            model = get_value_at_index(lora, 0)
-            del lora
-        
-        modelsamplingsd3 = NODE_CLASS_MAPPINGS["ModelSamplingSD3"]().patch(
-            shift=8.0, model=model
-        )
-        del model
-        
-        model = get_value_at_index(modelsamplingsd3, 0)
-        return model
-    
-def load_clip(model_name: str):
-    return NODE_CLASS_MAPPINGS['CLIPLoader']().load_clip(
-        clip_name=model_name,
-        type='wan',
-        device='default',
-    )
-
-def load_vae(model_name: str):
-    return NODE_CLASS_MAPPINGS["VAELoader"]().load_vae(vae_name=model_name)

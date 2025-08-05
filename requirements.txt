@@ -65,6 +65,7 @@ open-clip-torch>=2.24.0
 pytorch-lightning>=2.2.1
 huggingface_hub[hf-transfer]
 iopath
+logging
 
 # ComfyUI
 comfyui-embedded-docs==0.2.4
