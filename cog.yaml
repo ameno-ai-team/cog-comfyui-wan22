@@ -18,11 +18,11 @@ build:
     - rm "ComfyUI.zip"
     - rm "ComfyUI-VideoHelperSuite.zip"
     - rm "ComfyUI-GGUF.zip"
-    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/HighNoise/Wan2.2-T2V-A14B-HighNoise-Q4_K_M.gguf -o ComfyUI/models/unet/Wan2.2-T2V-A14B-HighNoise.gguf
-    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/LowNoise/Wan2.2-T2V-A14B-LowNoise-Q4_K_M.gguf -o ComfyUI/models/unet/Wan2.2-T2V-A14B-LowNoise.gguf
-    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/VAE/Wan2.1_VAE.safetensors -o ComfyUI/models/vae/Wan2.1_VAE.safetensors
-    - curl -L https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors -o ComfyUI/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors 
-    - curl -L https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors -o ComfyUI/models/loras/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors
-    - curl -L https://huggingface.co/hotdogs/wan_nsfw_lora/resolve/main/Wan2.1_T2V_14B_FusionX_LoRA.safetensors -o ComfyUI/models/loras/Wan2.1_T2V_14B_FusionX_LoRA.safetensors
     - curl -L https://huggingface.co/ai-forever/Real-ESRGAN/resolve/a86fc6182b4650b4459cb1ddcb0a0d1ec86bf3b0/RealESRGAN_x2.pth -o ComfyUI/models/upscale_models/RealESRGAN_x2.pth
+    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/VAE/Wan2.1_VAE.safetensors -o ComfyUI/models/vae/Wan2.1_VAE.safetensors
+    - curl -L https://huggingface.co/hotdogs/wan_nsfw_lora/resolve/main/Wan2.1_T2V_14B_FusionX_LoRA.safetensors -o ComfyUI/models/loras/Wan2.1_T2V_14B_FusionX_LoRA.safetensors
+    - curl -L https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors -o ComfyUI/models/loras/lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors
+    - curl -L https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors -o ComfyUI/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors 
+    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/LowNoise/Wan2.2-T2V-A14B-LowNoise-Q8_0.gguf -o ComfyUI/models/unet/Wan2.2-T2V-A14B-LowNoise.gguf
+    - curl -L https://huggingface.co/QuantStack/Wan2.2-T2V-A14B-GGUF/resolve/main/HighNoise/Wan2.2-T2V-A14B-HighNoise-Q8_0.gguf -o ComfyUI/models/unet/Wan2.2-T2V-A14B-HighNoise.gguf
 predict: "predict.py:Predictor"

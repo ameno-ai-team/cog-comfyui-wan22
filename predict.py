@@ -199,11 +199,11 @@ class Predictor(BasePredictor):
         ),
         width: int = Input(
             description='Width',
-            default=480
+            default=832
         ),
         height: int = Input(
             description='Height',
-            default=864
+            default=480
         ),
         length: int = Input(
             description='Length/Frames',
@@ -211,19 +211,19 @@ class Predictor(BasePredictor):
         ),
         steps: int = Input(
             description='Steps for generation',
-            default=8
+            default=4
         ),
         fps: int = Input(
             description='FPS',
             default=16
         ),
         fast_mode: bool = Input(
-            description='Fast mode',
-            default=True
+            description='Fast mode (Reduce Quality)',
+            default=False
         ),
         upscale: bool = Input(
-            description='Upscale x2',
-            default=True
+            description='Upscaling',
+            default=False
         ),
         seed: int = Input(
             description='Seed',
